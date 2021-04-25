@@ -1,33 +1,124 @@
-import './App.css';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import RecordRTC from 'recordrtc';
-import 'antd/dist/antd.css';
 
+import ts from "./core/singleton.js";
+import { processAudio } from './core/processAudio'
 
+import IconButton from '@material-ui/core/IconButton';
+import MicIcon from '@material-ui/icons/Mic';
+import PlayArrowButton from '@material-ui/icons/PlayArrow';
+import Snackbar from '@material-ui/core/Snackbar';
+import MuiAlert from '@material-ui/lab/Alert';
 
-const App = () => {
+import './App.css';
 
+function Alert(props) {
+    return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
+
+function App() {
+    const [appStatus, setAppStatus] = useState("record");
+    const [blocked, setBlocked] = useState(false);
+    const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+
+    const mrConstraints = {
+        checkForInactiveTracks: true,
+        numberOfAudioChannels: 1,
+        audioBitsPerSecond: 320000,
+        recorderType: RecordRTC.StereoAudioRecorder,
+        type: 'audio',
+    }
+    const umConstraints = { audio: true };
+
+    useEffect(() => {
+        if(!navigator.mediaDevices) {
+            setSnackbarOpen(true);
+        }
+    }, [])
+
+    async function initMediaRecorder() {
+        ts.userMedia = await navigator.mediaDevices.getUserMedia(umConstraints)
+        ts.mediaRecorder = RecordRTC(ts.userMedia, mrConstraints);
+    }
+
+    function record() {
+        initMediaRecorder().then(() => {
+            setBlocked(true);
+            ts.mediaRecorder.startRecording();
+            setTimeout(() => {
+                ts.mediaRecorder.stopRecording(() => {
+                    ts.source = processAudio(ts.mediaRecorder.getBlob());
+                    ts.mediaRecorder.reset();
+                    setAppStatus("play");
+                    setBlocked(false);
+                    ts.userMedia.getTracks()[0].stop();
+                });
+            }, 3000);
+
+        }).catch(function (e) {
+            console.error(e.name);
+            console.error(e.message);
+            if (!ts.mediaRecorder) {
+                setSnackbarOpen(true);
+            } else {
+                alert("an error occurred.")
+            }
+        });
+    }
+
+    function play() {
+        setBlocked(true);
+        ts.source.start(0);
+        setTimeout(() => {
+            setAppStatus("record");
+            setBlocked(false);
+        }, 3500);
+    }
+
+    const handleSnackbarClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setSnackbarOpen(false);
+    };
 
 
     return (
-        <div>
-            <title>Audio Recording | RecordRTC</title>
-            <h1>Simple Audio Recording using RecordRTC</h1>
-
-            <br/>
-
-     {/*       <button id="btn-start-recording" onClick={handleRecording}>Start Recording</button>
-            <button id="btn-stop-recording" onClick={handleStopRecording} disabled>Stop Recording</button>
-            <button id="btn-release-microphone" onClick={handleReleaseRecording} disabled>Release Microphone</button>
-            <button id="btn-download-recording" onClick={handleDownloadRecording} disabled>Download</button>*/}
-
-            <div>
-                <audio controls autoPlay playsInline></audio>
+        <div className="App">
+            <div className={appStatus + "-" + blocked}>
+                <IconButton
+                    disableFocusRipple={true}
+                    disableRipple={true}
+                    style={{
+                        backgroundColor: 'transparent',
+                        height: '100vh'
+                    }}
+                    disabled={blocked}
+                    onClick={
+                        appStatus === "record" ?
+                            record : play
+                    }
+                >
+                    {appStatus === "record" ?
+                        <MicIcon
+                            style={{ fontSize: 200 }}
+                        /> :
+                        <PlayArrowButton
+                            style={{ fontSize: 200 }}
+                        />
+                    }
+                </IconButton>
             </div>
+
+            <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+                <Alert onClose={handleSnackbarClose} severity="error">
+                    Please try in a different browser.<br/>
+                    📲 iOS: Safari, Android: Chrome
+                </Alert>
+            </Snackbar>
 
         </div>
     );
-
 }
 
 export default App;
