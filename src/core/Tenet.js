@@ -1,4 +1,4 @@
-class TenetSingleton {
+class Tenet {
   constructor() {
     this._source = null;
     this._mediaRecorder = null;
@@ -30,4 +30,4 @@ class TenetSingleton {
   }
 }
 
-export default new TenetSingleton();
+export default new Tenet();

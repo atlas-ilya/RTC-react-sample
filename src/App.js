@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import RecordRTC from 'recordrtc';
 
-import ts from "./core/singleton.js";
+import ts from "./core/Tenet.js";
 import {processAudio} from './core/processAudio'
 
 import IconButton from '@material-ui/core/IconButton';
