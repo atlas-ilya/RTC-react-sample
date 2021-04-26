@@ -7,21 +7,34 @@ import {processAudio} from './core/processAudio'
 import IconButton from '@material-ui/core/IconButton';
 import MicIcon from '@material-ui/icons/Mic';
 import PlayArrowButton from '@material-ui/icons/PlayArrow';
-import Snackbar from '@material-ui/core/Snackbar';
-import MuiAlert from '@material-ui/lab/Alert';
+
 
 import './App.css';
-import {FormControlLabel, Switch} from "@material-ui/core";
+import {Container, FormControlLabel, Slider, Snackbar, Switch, Typography} from "@material-ui/core";
+import {Alert} from "@material-ui/lab";
+
 
 function App() {
     const [appStatus, setAppStatus] = useState("record");
     const [blocked, setBlocked] = useState(false);
     const [tenet, setTenet] = useState(false);
-    const [snackbarOpen, setSnackbarOpen] = React.useState(false);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [props, setProps] = useState({
+        audioBitsPerSecond: 32000,
+        sampleRate: 44100,
+        desiredSampRate: 22050,
+        bufferSize: 8,
+        numberOfAudioChannels: 1
+    });
+
+
     const mrConstraints = {
         checkForInactiveTracks: true,
-        numberOfAudioChannels: 1,
-        audioBitsPerSecond: 320000,
+        audioBitsPerSecond: props.audioBitsPerSecond,
+        sampleRate: props.sampleRate,
+        desiredSampRate: props.desiredSampRate,
+        bufferSize: Math.pow(2,props.bufferSize),
+        numberOfAudioChannels: props.numberOfAudioChannels,
         recorderType: RecordRTC.StereoAudioRecorder,
         type: 'audio',
     }
@@ -37,6 +50,7 @@ function App() {
         ts.userMedia = await navigator.mediaDevices.getUserMedia(umConstraints)
         ts.mediaRecorder = RecordRTC(ts.userMedia, mrConstraints);
     }
+
 
     function record() {
         initMediaRecorder().then(() => {
@@ -69,6 +83,13 @@ function App() {
             setBlocked(false);
         }, 3500);
     }
+
+    const handleSnackbarClose = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setSnackbarOpen(false);
+    };
 
     return (
         <div className="App">
@@ -115,6 +136,158 @@ function App() {
                     }
                 </IconButton>
             </div>
+            <Container>
+                <Typography gutterBottom style={{
+                    textAlign: "center"
+                }}>
+                    audioBitsPerSecond
+                </Typography>
+                <Typography id="non-linear-slider" gutterBottom style={{
+                    textAlign: "right"
+                }}>
+                    {props.audioBitsPerSecond}
+                </Typography>
+                <Slider
+                    style={{
+                        textAlign: "left",
+                        color: "red"
+                    }}
+                    value={props.audioBitsPerSecond}
+                    min={8000}
+                    step={1000}
+                    max={640000}
+                    marks
+                    onChange={(event, newValue) => {
+                        setProps({
+                            ...props,
+                            audioBitsPerSecond: newValue
+                        });
+                    }}
+                    aria-labelledby="non-linear-slider"
+                />
+                <Typography id="non-linear-slider" gutterBottom style={{
+                    textAlign: "center"
+                }}>
+                    sampleRate
+                </Typography>
+                <Typography id="non-linear-slider" gutterBottom style={{
+                    textAlign: "right"
+                }}>
+                    {props.sampleRate}
+                </Typography>
+                <Slider
+                    style={{
+                        textAlign: "left",
+                        color: "orange"
+                    }}
+                    value={props.sampleRate}
+                    min={22050}
+                    step={1000}
+                    max={96000}
+                    marks
+                    onChange={(event, newValue) => {
+                        setProps({
+                            ...props,
+                            sampleRate: newValue
+                        });
+                    }}
+                    aria-labelledby="non-linear-slider"
+                />
+
+                <Typography id="non-linear-slider" gutterBottom style={{
+                    textAlign: "center"
+                }}>
+                    desiredSampRate
+                </Typography>
+                <Typography id="non-linear-slider" gutterBottom style={{
+                    textAlign: "right"
+                }}>
+                    {props.desiredSampRate}
+                </Typography>
+                <Slider
+                    style={{
+                        textAlign: "left",
+                        color: "grey"
+                    }}
+                    value={props.desiredSampRate}
+                    min={22050}
+                    step={1000}
+                    max={96000}
+                    marks
+                    onChange={(event, newValue) => {
+                        setProps({
+                            ...props,
+                            desiredSampRate: newValue
+                        });
+                    }}
+                    aria-labelledby="non-linear-slider"
+                />
+
+                <Typography id="non-linear-slider" gutterBottom style={{
+                    textAlign: "center"
+                }}>
+                    bufferSize
+                </Typography>
+                <Typography id="non-linear-slider" gutterBottom style={{
+                    textAlign: "right"
+                }}>
+                    {Math.pow(2, props.bufferSize)}
+                </Typography>
+                <Slider
+                    style={{
+                        textAlign: "left",
+                        color: "green"
+                    }}
+                    value={props.bufferSize}
+                    min={8}
+                    step={1}
+                    max={14}
+                    marks
+                    onChange={(event, newValue) => {
+                        setProps({
+                            ...props,
+                            bufferSize: newValue
+                        });
+                    }}
+                    aria-labelledby="non-linear-slider"
+                />
+
+                <Typography id="non-linear-slider" gutterBottom style={{
+                    textAlign: "center"
+                }}>
+                    numberOfAudioChannels
+                </Typography>
+                <Typography id="non-linear-slider" gutterBottom style={{
+                    textAlign: "right"
+                }}>
+                    {props.numberOfAudioChannels}
+                </Typography>
+                <Slider
+                    style={{
+                        textAlign: "left",
+                        color: "blue"
+                    }}
+                    value={props.numberOfAudioChannels}
+                    min={1}
+                    step={1}
+                    max={2}
+                    marks
+                    onChange={(event, newValue) => {
+                        setProps({
+                            ...props,
+                            numberOfAudioChannels: newValue
+                        });
+                    }}
+                    aria-labelledby="non-linear-slider"
+                />
+            </Container>
+            <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
+                <Alert onClose={handleSnackbarClose} severity="error">
+                    Please try in a different browser<br/>
+                    📲 iOS: Safari, Android: Chrome
+                </Alert>
+            </Snackbar>
+
         </div>
     );
 }
