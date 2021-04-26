@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import RecordRTC from 'recordrtc';
 
 import ts from "./core/singleton.js";
-import { processAudio } from './core/processAudio'
+import {processAudio} from './core/processAudio'
 
 import IconButton from '@material-ui/core/IconButton';
 import MicIcon from '@material-ui/icons/Mic';
@@ -11,16 +11,13 @@ import Snackbar from '@material-ui/core/Snackbar';
 import MuiAlert from '@material-ui/lab/Alert';
 
 import './App.css';
-
-function Alert(props) {
-    return <MuiAlert elevation={6} variant="filled" {...props} />;
-}
+import {FormControlLabel, Switch} from "@material-ui/core";
 
 function App() {
     const [appStatus, setAppStatus] = useState("record");
     const [blocked, setBlocked] = useState(false);
+    const [tenet, setTenet] = useState(false);
     const [snackbarOpen, setSnackbarOpen] = React.useState(false);
-
     const mrConstraints = {
         checkForInactiveTracks: true,
         numberOfAudioChannels: 1,
@@ -28,10 +25,10 @@ function App() {
         recorderType: RecordRTC.StereoAudioRecorder,
         type: 'audio',
     }
-    const umConstraints = { audio: true };
+    const umConstraints = {audio: true};
 
     useEffect(() => {
-        if(!navigator.mediaDevices) {
+        if (!navigator.mediaDevices) {
             setSnackbarOpen(true);
         }
     }, [])
@@ -47,7 +44,7 @@ function App() {
             ts.mediaRecorder.startRecording();
             setTimeout(() => {
                 ts.mediaRecorder.stopRecording(() => {
-                    ts.source = processAudio(ts.mediaRecorder.getBlob());
+                    ts.source = processAudio(ts.mediaRecorder.getBlob(), tenet);
                     ts.mediaRecorder.reset();
                     setAppStatus("play");
                     setBlocked(false);
@@ -56,8 +53,6 @@ function App() {
             }, 3000);
 
         }).catch(function (e) {
-            console.error(e.name);
-            console.error(e.message);
             if (!ts.mediaRecorder) {
                 setSnackbarOpen(true);
             } else {
@@ -75,24 +70,35 @@ function App() {
         }, 3500);
     }
 
-    const handleSnackbarClose = (event, reason) => {
-        if (reason === 'clickaway') {
-            return;
-        }
-        setSnackbarOpen(false);
-    };
-
-
     return (
         <div className="App">
             <div className={appStatus + "-" + blocked}>
+
+                {appStatus === "record" ? <FormControlLabel
+                    value="TENET"
+                    control={<Switch
+                        checked={tenet}
+                        onChange={(event) => {
+                            setTenet(event.target.checked)
+                        }}
+                        color="primary"/>}
+                    label="TENET"
+                    labelPlacement="top"
+                /> : null}
                 <IconButton
                     disableFocusRipple={true}
                     disableRipple={true}
-                    style={{
-                        backgroundColor: 'transparent',
-                        height: '100vh'
-                    }}
+                    style={tenet ?
+                        {
+                            backgroundColor: 'transparent',
+                            height: '50vh',
+                            transform: "scale(-1, 1)"
+
+                        } : {
+                            backgroundColor: 'transparent',
+                            height: '50vh',
+                        }
+                    }
                     disabled={blocked}
                     onClick={
                         appStatus === "record" ?
@@ -101,24 +107,17 @@ function App() {
                 >
                     {appStatus === "record" ?
                         <MicIcon
-                            style={{ fontSize: 200 }}
+                            style={{fontSize: 200}}
                         /> :
                         <PlayArrowButton
-                            style={{ fontSize: 200 }}
+                            style={{fontSize: 200}}
                         />
                     }
                 </IconButton>
             </div>
-
-            <Snackbar open={snackbarOpen} autoHideDuration={6000} onClose={handleSnackbarClose}>
-                <Alert onClose={handleSnackbarClose} severity="error">
-                    Please try in a different browser.<br/>
-                    📲 iOS: Safari, Android: Chrome
-                </Alert>
-            </Snackbar>
-
         </div>
     );
 }
+
 
 export default App;

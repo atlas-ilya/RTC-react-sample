@@ -1,10 +1,6 @@
 import { altArrayBuffer } from '../utils/altArrayBuffer'
 
-function _reverseAudio(someBuffer, n) {
-    Array.prototype.reverse.call(someBuffer.getChannelData(n));
-}
-
-export function processAudio(blob) {
+export function processAudio(blob, tenet) {
     let context = new (window.AudioContext || window.webkitAudioContext)();
     let source = context.createBufferSource();
 
@@ -17,7 +13,8 @@ export function processAudio(blob) {
             audioToReverse = context.createBuffer(numChannels, buffer.length, buffer.sampleRate);
             for (let n = 0; n < numChannels; n++) {
                 audioToReverse.getChannelData(n).set(buffer.getChannelData(n));
-                setTimeout(_reverseAudio(audioToReverse, n), 500);
+                if (tenet)
+                    setTimeout(Array.prototype.reverse.call(audioToReverse.getChannelData(n)), 500);
             }
             source.buffer = audioToReverse;
             source.connect(context.destination);
